@@ -1,0 +1,186 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Fiche Démonstrations Culinaires</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-content">
+  <div class="form-container">
+
+    <div class="form-intro">
+      <div class="intro-title">Démonstrations Culinaires (GPF)</div>
+      <div class="intro-sub">Séances pratiques, sensibilisation des ménages & indicateurs genre</div>
+    </div>
+
+    <!-- 1. Localisation -->
+    <div class="form-section">
+      <div class="section-title">1. Localisation</div>
+
+      <div class="form-group">
+        <label>
+          Région
+          <span class="badge-lock" *ngIf="isRegionLocked">🔒 Affectation Fixée</span>
+        </label>
+        <input *ngIf="isRegionLocked" type="text" [value]="formData.region" readonly class="custom-input locked-input">
+        <select *ngIf="!isRegionLocked" [(ngModel)]="formData.region" (change)="onRegionChange()" class="custom-select">
+          <option *ngFor="let r of regions" [value]="r.nom">{{ r.nom }}</option>
+        </select>
+        <small *ngIf="isRegionLocked" class="hint-locked">Collecte verrouillée sur votre région d'affectation.</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Département</label>
+          <select [(ngModel)]="formData.departement" (change)="onDepartementChange()" class="custom-select">
+            <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+          </select>
+        </div>
+        <div class="form-group half">
+          <label>Commune</label>
+          <select [(ngModel)]="formData.commune" class="custom-select">
+            <option *ngFor="let c of communes" [value]="c.nom">{{ c.nom }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Village ou Quartier</label>
+        <input type="text" [(ngModel)]="formData.village_quartier" placeholder="Ex: Quartier Santhie" class="custom-input">
+      </div>
+
+      <div class="gps-box">
+        <button type="button" class="btn-gps" (click)="captureGps()" [disabled]="isCapturingGps">
+          <span>📍</span>
+          <span>Capturer position GPS</span>
+        </button>
+        <div *ngIf="formData.latitude" class="gps-coords">
+          Lat : {{ formData.latitude | number:'1.4-4' }}, Lng : {{ formData.longitude | number:'1.4-4' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Date -->
+    <div class="form-section">
+      <div class="section-title">2. Date de la Démonstration</div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" [(ngModel)]="formData.date_demonstration" class="custom-input">
+      </div>
+    </div>
+
+    <!-- 3. GPF Bénéficiaire -->
+    <div class="form-section">
+      <div class="section-title">3. Groupement de Promotion Féminine (GPF)</div>
+
+      <div class="form-group">
+        <label>Nom du GPF bénéficiaire *</label>
+        <input type="text" [(ngModel)]="formData.gpf_nom" placeholder="Ex: GPF Bokk Jom" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Activités principales du GPF</label>
+        <textarea rows="2" [(ngModel)]="formData.activites_principales_gpf" placeholder="Ex: Transformation de céréales, maraîchage, aviculture..." class="custom-textarea"></textarea>
+      </div>
+    </div>
+
+    <!-- 4. Présence & Indicateurs Genre -->
+    <div class="form-section">
+      <div class="section-title">4. Présence à la Séance (Indicateurs Genre)</div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Nombre de Femmes *</label>
+          <input type="number" min="0" [(ngModel)]="formData.nb_femmes" (input)="updateTotalPresents()" class="custom-input font-bold text-pink-700">
+        </div>
+        <div class="form-group half">
+          <label>Nombre d'Hommes</label>
+          <input type="number" min="0" [(ngModel)]="formData.nb_hommes" (input)="updateTotalPresents()" class="custom-input font-bold">
+        </div>
+      </div>
+
+      <div class="total-presents-box">
+        <span>Total Présents à la Séance :</span>
+        <strong class="font-mono text-lg text-emerald-800">{{ formData.nb_presents }} personnes</strong>
+      </div>
+    </div>
+
+    <!-- 5. Présidente du GPF -->
+    <div class="form-section">
+      <div class="section-title">5. Présidente du GPF</div>
+
+      <div class="form-group">
+        <label>Prénom et Nom de la Présidente *</label>
+        <input type="text" [(ngModel)]="formData.presidente_nom" placeholder="Ex: Khady Cissé" class="custom-input">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Téléphone Présidente</label>
+          <input type="tel" [(ngModel)]="formData.presidente_contact" placeholder="+221 77..." class="custom-input">
+        </div>
+        <div class="form-group half">
+          <label>Âge</label>
+          <input type="number" [(ngModel)]="formData.presidente_age" placeholder="Ex: 45" class="custom-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Consentements -->
+    <div class="form-section">
+      <div class="section-title">6. Consentements Formels</div>
+
+      <div class="consent-row">
+        <div class="consent-text">
+          <div class="consent-title">Prise de photo / vidéo</div>
+          <div class="consent-desc">J'autorise la prise de photo/vidéo pour la documentation</div>
+        </div>
+        <div class="toggle-btn-group">
+          <button type="button" [class.active]="formData.consent_photo_video" (click)="formData.consent_photo_video = true">OUI</button>
+          <button type="button" [class.active]="!formData.consent_photo_video" (click)="formData.consent_photo_video = false">NON</button>
+        </div>
+      </div>
+
+      <div class="consent-row">
+        <div class="consent-text">
+          <div class="consent-title">Interview & Diffusion</div>
+          <div class="consent-desc">J'autorise le partage ou l'utilisation d'un interview au besoin</div>
+        </div>
+        <div class="toggle-btn-group">
+          <button type="button" [class.active]="formData.consent_interview" (click)="formData.consent_interview = true">OUI</button>
+          <button type="button" [class.active]="!formData.consent_interview" (click)="formData.consent_interview = false">NON</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Responsable -->
+    <div class="form-section">
+      <div class="section-title">7. Responsable de l'Activité</div>
+      <div class="form-group">
+        <label>Nom du responsable de collecte *</label>
+        <input type="text" [(ngModel)]="formData.responsable_nom" placeholder="Ex: Aminata Sarr" class="custom-input">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-draft" (click)="save(true)">
+        💾 Sauvegarder Brouillon
+      </button>
+      <button type="button" class="btn-submit" (click)="save(false)">
+        ✓ Valider la Fiche
+      </button>
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

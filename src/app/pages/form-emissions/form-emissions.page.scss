@@ -1,0 +1,50 @@
+@import '../form-ventes/form-ventes.page.scss';
+
+.participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.participant-item {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+
+  .p-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+
+    .p-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+
+    .btn-remove-sm {
+      background: none;
+      border: none;
+      color: #dc2626;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  }
+}
+
+.btn-add {
+  width: 100%;
+  background: #f0fdf4;
+  border: 1px dashed #86efac;
+  color: #15803d;
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}

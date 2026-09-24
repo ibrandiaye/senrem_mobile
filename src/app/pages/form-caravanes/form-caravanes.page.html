@@ -1,0 +1,162 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Fiche Suivi Caravanes</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-content">
+  <div class="form-container">
+
+    <div class="form-intro">
+      <div class="intro-title">Caravanes Mobiles de Sensibilisation</div>
+      <div class="intro-sub">Itinéraire, logistique, villages sillonnés et FA vendus</div>
+    </div>
+
+    <!-- 1. Localisation -->
+    <div class="form-section">
+      <div class="section-title">1. Zone & Période</div>
+
+      <div class="form-group">
+        <label>
+          Région
+          <span class="badge-lock" *ngIf="isRegionLocked">🔒 Affectation Fixée</span>
+        </label>
+        <input *ngIf="isRegionLocked" type="text" [value]="formData.region" readonly class="custom-input locked-input">
+        <select *ngIf="!isRegionLocked" [(ngModel)]="formData.region" (change)="onRegionChange()" class="custom-select">
+          <option *ngFor="let r of regions" [value]="r.nom">{{ r.nom }}</option>
+        </select>
+        <small *ngIf="isRegionLocked" class="hint-locked">Collecte verrouillée sur votre région d'affectation.</small>
+      </div>
+
+      <div class="form-group">
+        <label>Département</label>
+        <select [(ngModel)]="formData.departement" class="custom-select">
+          <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Date de la caravane</label>
+        <input type="date" [(ngModel)]="formData.date_caravane" class="custom-input">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Heure de début</label>
+          <input type="time" [(ngModel)]="formData.heure_debut" class="custom-input">
+        </div>
+        <div class="form-group half">
+          <label>Heure de fin</label>
+          <input type="time" [(ngModel)]="formData.heure_fin" class="custom-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Distributeurs & Itinéraire -->
+    <div class="form-section">
+      <div class="section-title">2. Distributeurs & Itinéraire</div>
+
+      <div class="form-group">
+        <label>Distributeur(s) bénéficiaire(s)</label>
+        <input type="text" [(ngModel)]="formData.distributeurs_beneficiaires" placeholder="Noms des distributeurs appuyés" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Contact(s) distributeur(s)</label>
+        <input type="text" [(ngModel)]="formData.distributeurs_contacts" placeholder="Téléphones..." class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Itinéraire de la caravane *</label>
+        <textarea rows="2" [(ngModel)]="formData.itineraire" placeholder="Départ place publique -> Village X -> Village Y..." class="custom-textarea"></textarea>
+      </div>
+    </div>
+
+    <!-- 3. Logistique -->
+    <div class="form-section">
+      <div class="section-title">3. Moyens & Logistique Utilisés</div>
+
+      <div class="chips-container">
+        <button 
+          type="button" 
+          *ngFor="let m of moyensDisponibles" 
+          class="chip-btn" 
+          [class.selected]="hasMoyen(m)" 
+          (click)="toggleMoyen(m)">
+          <span *ngIf="hasMoyen(m)">✓</span> {{ m }}
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. Villages Sillonnés (Dynamique) -->
+    <div class="form-section">
+      <div class="section-title-with-badge">
+        <div class="section-title">4. Villages / Quartiers Touchés</div>
+        <span class="total-bubble">{{ villagesTouches.length }} village(s)</span>
+      </div>
+
+      <div class="villages-list">
+        <div *ngFor="let v of villagesTouches; let idx = index" class="village-item">
+          <div class="village-num">{{ idx + 1 }}</div>
+          <div class="village-inputs">
+            <input type="text" [(ngModel)]="v.nom_village_quartier" placeholder="Nom du village / quartier *" class="custom-input">
+            <input type="text" [(ngModel)]="v.commune_ou_zone" placeholder="Commune ou zone" class="custom-input mt-1">
+          </div>
+          <button type="button" class="btn-remove" (click)="removeVillage(idx)" *ngIf="villagesTouches.length > 1">✕</button>
+        </div>
+      </div>
+
+      <button type="button" class="btn-add" (click)="addVillage()">
+        + Ajouter un autre village sillonnés
+      </button>
+    </div>
+
+    <!-- 5. Supports de communication & Ventes -->
+    <div class="form-section">
+      <div class="section-title">5. Supports & Résultats de Vente</div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Nombre d'Affiches</label>
+          <input type="number" min="0" [(ngModel)]="formData.supports_affiches" class="custom-input font-mono">
+        </div>
+        <div class="form-group half">
+          <label>Nombre de Dépliants</label>
+          <input type="number" min="0" [(ngModel)]="formData.supports_depliants" class="custom-input font-mono">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre de FA Vendus pendant la caravane *</label>
+        <input type="number" min="0" [(ngModel)]="formData.nb_fa_vendus" class="custom-input font-mono font-black text-xl text-emerald-800">
+      </div>
+
+      <div class="form-group">
+        <label>Responsable de la collecte *</label>
+        <input type="text" [(ngModel)]="formData.responsable_nom" placeholder="Prénom et Nom" class="custom-input">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-draft" (click)="save(true)">
+        💾 Sauvegarder Brouillon
+      </button>
+      <button type="button" class="btn-submit" (click)="save(false)">
+        ✓ Valider la Fiche
+      </button>
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

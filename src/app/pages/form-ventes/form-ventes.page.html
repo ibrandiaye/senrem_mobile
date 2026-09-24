@@ -1,0 +1,159 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Fiche Suivi Distributeurs</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-content">
+  <div class="form-container">
+
+    <!-- Form Intro Card -->
+    <div class="form-intro">
+      <div class="intro-title">Vente de Foyers Améliorés (FA)</div>
+      <div class="intro-sub">Fiche de suivi conforme au canevas national SENRM / Enda ECOPOP</div>
+    </div>
+
+    <!-- Section 1 : Distributeur -->
+    <div class="form-section">
+      <div class="section-title">1. Informations Distributeur</div>
+
+      <div class="form-group">
+        <label>Nom et Prénom du Distributeur *</label>
+        <input type="text" [(ngModel)]="formData.distributeur_nom" placeholder="Ex: Moussa Diop" class="custom-input">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Statut</label>
+          <select [(ngModel)]="formData.distributeur_statut" class="custom-select">
+            <option value="Distributeur Agréé">Distributeur Agréé</option>
+            <option value="Relais Communautaire">Relais Communautaire</option>
+            <option value="GPF Partenaire">GPF Partenaire</option>
+            <option value="Artisan Forgeron">Artisan Forgeron</option>
+          </select>
+        </div>
+
+        <div class="form-group half">
+          <label>Téléphone</label>
+          <input type="tel" [(ngModel)]="formData.distributeur_telephone" placeholder="+221 77..." class="custom-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2 : Localisation Administrative -->
+    <div class="form-section">
+      <div class="section-title">2. Localisation Géographique</div>
+
+      <div class="form-group">
+        <label>
+          Région
+          <span class="badge-lock" *ngIf="isRegionLocked">🔒 Affectation Fixée</span>
+        </label>
+        <input *ngIf="isRegionLocked" type="text" [value]="formData.region" readonly class="custom-input locked-input">
+        <select *ngIf="!isRegionLocked" [(ngModel)]="formData.region" (change)="onRegionChange()" class="custom-select">
+          <option *ngFor="let r of regions" [value]="r.nom">{{ r.nom }}</option>
+        </select>
+        <small *ngIf="isRegionLocked" class="hint-locked">Collecte verrouillée sur votre région d'affectation.</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Département</label>
+          <select [(ngModel)]="formData.departement" (change)="onDepartementChange()" class="custom-select">
+            <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+          </select>
+        </div>
+
+        <div class="form-group half">
+          <label>Commune</label>
+          <select [(ngModel)]="formData.commune" class="custom-select">
+            <option *ngFor="let c of communes" [value]="c.nom">{{ c.nom }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Village ou Quartier</label>
+        <input type="text" [(ngModel)]="formData.village_quartier" placeholder="Ex: Quartier Escale" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Adresse du Client</label>
+        <input type="text" [(ngModel)]="formData.adresse_client" placeholder="Ex: Près de la grande mosquée" class="custom-input">
+      </div>
+
+      <div class="gps-box">
+        <button type="button" class="btn-gps" (click)="captureGps()" [disabled]="isCapturingGps">
+          <span>📍</span>
+          <span *ngIf="!isCapturingGps">Capturer les coordonnées GPS terrain</span>
+          <span *ngIf="isCapturingGps">Acquisition satellite en cours...</span>
+        </button>
+        <div *ngIf="formData.latitude" class="gps-coords">
+          Lat : {{ formData.latitude | number:'1.4-4' }}, Lng : {{ formData.longitude | number:'1.4-4' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3 : Date de vente -->
+    <div class="form-section">
+      <div class="section-title">3. Date de la Vente</div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" [(ngModel)]="formData.date_vente" class="custom-input">
+      </div>
+    </div>
+
+    <!-- Section 4 : Grille des 10 Foyers Améliorés -->
+    <div class="form-section">
+      <div class="section-title-with-badge">
+        <div class="section-title">4. Quantités Vendues par Modèle de FA</div>
+        <span class="total-bubble">{{ totalFoyers }} FA au total</span>
+      </div>
+
+      <div class="foyers-list">
+        <div *ngFor="let f of foyers" class="foyer-row">
+          <div class="foyer-info">
+            <div class="foyer-name">{{ f.nom }}</div>
+            <div class="foyer-badge" [class.charbon]="f.combustible === 'Charbon'" [class.bois]="f.combustible === 'Bois'" [class.mixte]="f.combustible === 'Bois/Charbon'">
+              {{ f.combustible }} &bull; {{ f.capacite_kg }}
+            </div>
+          </div>
+
+          <div class="qty-control">
+            <button type="button" class="btn-qty" (click)="decrement(f.id)">-</button>
+            <input type="number" min="0" [(ngModel)]="quantites[f.id]" class="qty-input">
+            <button type="button" class="btn-qty plus" (click)="increment(f.id)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Sticky Summary -->
+    <div class="summary-card">
+      <div class="summary-label">Total des Foyers Améliorés :</div>
+      <div class="summary-count">{{ totalFoyers }} FA</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-draft" (click)="save(true)">
+        💾 Sauvegarder Brouillon
+      </button>
+      <button type="button" class="btn-submit" (click)="save(false)">
+        ✓ Valider la Fiche
+      </button>
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

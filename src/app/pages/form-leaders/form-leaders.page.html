@@ -1,0 +1,153 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Fiche Leaders d'Opinion</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-content">
+  <div class="form-container">
+
+    <div class="form-intro">
+      <div class="intro-title">Identification des Leaders d'Opinion</div>
+      <div class="intro-sub">Acteurs influents, notabilités, autorités religieuses et coutumières</div>
+    </div>
+
+    <!-- 1. Localisation -->
+    <div class="form-section">
+      <div class="section-title">1. Localisation</div>
+
+      <div class="form-group">
+        <label>
+          Région
+          <span class="badge-lock" *ngIf="isRegionLocked">🔒 Affectation Fixée</span>
+        </label>
+        <input *ngIf="isRegionLocked" type="text" [value]="formData.region" readonly class="custom-input locked-input">
+        <select *ngIf="!isRegionLocked" [(ngModel)]="formData.region" (change)="onRegionChange()" class="custom-select">
+          <option *ngFor="let r of regions" [value]="r.nom">{{ r.nom }}</option>
+        </select>
+        <small *ngIf="isRegionLocked" class="hint-locked">Collecte verrouillée sur votre région d'affectation.</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Département</label>
+          <select [(ngModel)]="formData.departement" (change)="onDepartementChange()" class="custom-select">
+            <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+          </select>
+        </div>
+        <div class="form-group half">
+          <label>Commune</label>
+          <select [(ngModel)]="formData.commune" class="custom-select">
+            <option *ngFor="let c of communes" [value]="c.nom">{{ c.nom }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Village ou Quartier</label>
+        <input type="text" [(ngModel)]="formData.village_quartier" placeholder="Ex: Quartier Dahra Djoloff" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Lieu d'habitation</label>
+        <input type="text" [(ngModel)]="formData.lieu_habitation" placeholder="Ex: Près de la mairie / Grande mosquée" class="custom-input">
+      </div>
+
+      <div class="gps-box">
+        <button type="button" class="btn-gps" (click)="captureGps()" [disabled]="isCapturingGps">
+          <span>📍</span>
+          <span>Capturer position GPS</span>
+        </button>
+        <div *ngIf="formData.latitude" class="gps-coords">
+          Lat : {{ formData.latitude | number:'1.4-4' }}, Lng : {{ formData.longitude | number:'1.4-4' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Identité du leader -->
+    <div class="form-section">
+      <div class="section-title">2. Identité du Leader d'Opinion</div>
+
+      <div class="form-group">
+        <label>Prénom et Nom *</label>
+        <input type="text" [(ngModel)]="formData.prenom_nom" placeholder="Ex: El Hadji Malick Ba" class="custom-input">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Sexe</label>
+          <select [(ngModel)]="formData.sexe" class="custom-select">
+            <option value="M">Homme</option>
+            <option value="F">Femme</option>
+          </select>
+        </div>
+        <div class="form-group half">
+          <label>Titre / Fonction / Profession</label>
+          <input type="text" [(ngModel)]="formData.titre_profession" placeholder="Ex: Délégué de quartier, Imam..." class="custom-input">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Contact Téléphone *</label>
+          <input type="tel" [(ngModel)]="formData.telephone" placeholder="+221 77..." class="custom-input">
+        </div>
+        <div class="form-group half">
+          <label>Adresse Email</label>
+          <input type="email" [(ngModel)]="formData.email" placeholder="email@exemple.com" class="custom-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Ancrage & Sphère d'influence -->
+    <div class="form-section">
+      <div class="section-title">3. Ancrage Communautaire & Influence</div>
+
+      <div class="form-group">
+        <label>Membre d'entités (Association, GPF, OCB, autres...)</label>
+        <textarea rows="2" [(ngModel)]="formData.membre_entites" placeholder="Ex: CVD Dahra Sud, Association des éleveurs..." class="custom-textarea"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Fonctions au sein des entités</label>
+        <textarea rows="2" [(ngModel)]="formData.fonctions_entites" placeholder="Ex: Président du CVD, Trésorier..." class="custom-textarea"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Localités ou entités sous influence du leader</label>
+        <textarea rows="2" [(ngModel)]="formData.localites_influence" placeholder="Villages, quartiers ou groupements sous son influence..." class="custom-textarea"></textarea>
+      </div>
+    </div>
+
+    <!-- 4. Responsable -->
+    <div class="form-section">
+      <div class="section-title">4. Responsable de l'Activité</div>
+      <div class="form-group">
+        <label>Nom du responsable de collecte *</label>
+        <input type="text" [(ngModel)]="formData.responsable_nom" placeholder="Prénom et Nom" class="custom-input">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-draft" (click)="save(true)">
+        💾 Sauvegarder Brouillon
+      </button>
+      <button type="button" class="btn-submit" (click)="save(false)">
+        ✓ Valider la Fiche
+      </button>
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

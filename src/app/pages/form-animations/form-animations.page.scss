@@ -1,0 +1,31 @@
+@import '../form-ventes/form-ventes.page.scss';
+
+.signature-wrapper {
+  background: #f8fafc;
+  border: 1.5px dashed #94a3b8;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+
+  canvas {
+    background: #ffffff;
+    cursor: crosshair;
+    touch-action: none;
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
+.btn-clear {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}

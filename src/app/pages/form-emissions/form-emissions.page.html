@@ -1,0 +1,167 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Fiche Émissions Radios</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-content">
+  <div class="form-container">
+
+    <div class="form-intro">
+      <div class="intro-title">Diffusion des Émissions Radios</div>
+      <div class="intro-sub">Sensibilisation radiophonique, débats & participants en plateau</div>
+    </div>
+
+    <!-- 1. Station & Localisation -->
+    <div class="form-section">
+      <div class="section-title">1. Station Radio & Localisation</div>
+
+      <div class="form-group">
+        <label>
+          Région
+          <span class="badge-lock" *ngIf="isRegionLocked">🔒 Affectation Fixée</span>
+        </label>
+        <input *ngIf="isRegionLocked" type="text" [value]="formData.region" readonly class="custom-input locked-input">
+        <select *ngIf="!isRegionLocked" [(ngModel)]="formData.region" class="custom-select">
+          <option *ngFor="let r of regions" [value]="r.nom">{{ r.nom }}</option>
+        </select>
+        <small *ngIf="isRegionLocked" class="hint-locked">Collecte verrouillée sur votre région d'affectation.</small>
+      </div>
+
+      <div class="form-group">
+        <label>Commune</label>
+        <input type="text" [(ngModel)]="formData.commune" placeholder="Ex: Kaolack Ville" class="custom-input">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Nom de la Radio *</label>
+          <input type="text" [(ngModel)]="formData.radio_nom" placeholder="Ex: Radio Dunyaa FM" class="custom-input">
+        </div>
+        <div class="form-group half">
+          <label>Fréquence Radio (MHz)</label>
+          <input type="text" [(ngModel)]="formData.radio_frequence" placeholder="Ex: 102.5 MHz" class="custom-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Date & Créneaux -->
+    <div class="form-section">
+      <div class="section-title">2. Date & Heures de Diffusion</div>
+
+      <div class="form-group">
+        <label>Date de l'émission</label>
+        <input type="date" [(ngModel)]="formData.date_emission" class="custom-input">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Heure de début</label>
+          <input type="time" [(ngModel)]="formData.heure_debut" class="custom-input">
+        </div>
+        <div class="form-group half">
+          <label>Heure de fin</label>
+          <input type="time" [(ngModel)]="formData.heure_fin" class="custom-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Contenu de l'émission -->
+    <div class="form-section">
+      <div class="section-title">3. Thème & Format</div>
+
+      <div class="form-group">
+        <label>Thème de l'émission *</label>
+        <textarea rows="3" [(ngModel)]="formData.theme" placeholder="Thématique abordée..." class="custom-textarea"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Format</label>
+          <select [(ngModel)]="formData.format" class="custom-select">
+            <option value="direct">En direct</option>
+            <option value="differe">En différé</option>
+          </select>
+        </div>
+        <div class="form-group half">
+          <label>Lieu de réalisation</label>
+          <select [(ngModel)]="formData.lieu" class="custom-select">
+            <option value="studio">En studio</option>
+            <option value="hors_studio">Hors studio</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nom de l'animateur(rice) de l'émission *</label>
+        <input type="text" [(ngModel)]="formData.animateur_nom" placeholder="Prénom et Nom" class="custom-input">
+      </div>
+    </div>
+
+    <!-- 4. Participants en plateau (dynamique) -->
+    <div class="form-section">
+      <div class="section-title-with-badge">
+        <div class="section-title">4. Participants à l'Émission</div>
+        <span class="total-bubble">{{ participants.length }} intervenant(s)</span>
+      </div>
+
+      <div class="participants-list">
+        <div *ngFor="let p of participants; let idx = index" class="participant-item">
+          <div class="p-header">
+            <span class="p-num">Participant N°{{ idx + 1 }}</span>
+            <button type="button" class="btn-remove-sm" (click)="removeParticipant(idx)" *ngIf="participants.length > 1">✕ Supprimer</button>
+          </div>
+          <div class="form-group">
+            <input type="text" [(ngModel)]="p.prenom_nom" placeholder="Prénom et Nom *" class="custom-input">
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <select [(ngModel)]="p.sexe" class="custom-select">
+                <option value="M">Homme</option>
+                <option value="F">Femme</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <input type="text" [(ngModel)]="p.profession" placeholder="Profession / Rôle" class="custom-input">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn-add" (click)="addParticipant()">
+        + Ajouter un participant
+      </button>
+    </div>
+
+    <!-- 5. Responsable radio -->
+    <div class="form-section">
+      <div class="section-title">5. Responsable Programme Radio</div>
+      <div class="form-group">
+        <label>Nom du responsable programme radio</label>
+        <input type="text" [(ngModel)]="formData.responsable_radio_nom" placeholder="Prénom et Nom" class="custom-input">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-draft" (click)="save(true)">
+        💾 Sauvegarder Brouillon
+      </button>
+      <button type="button" class="btn-submit" (click)="save(false)">
+        ✓ Valider la Fiche
+      </button>
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

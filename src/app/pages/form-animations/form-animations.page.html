@@ -1,0 +1,162 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Fiche Animation-Vente</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-content">
+  <div class="form-container">
+
+    <div class="form-intro">
+      <div class="intro-title">Suivi des Animations - Ventes</div>
+      <div class="intro-sub">Marchés hebdomadaires, places publiques et loumas</div>
+    </div>
+
+    <!-- 1. Localisation -->
+    <div class="form-section">
+      <div class="section-title">1. Localisation</div>
+
+      <div class="form-group">
+        <label>
+          Région
+          <span class="badge-lock" *ngIf="isRegionLocked">🔒 Affectation Fixée</span>
+        </label>
+        <input *ngIf="isRegionLocked" type="text" [value]="formData.region" readonly class="custom-input locked-input">
+        <select *ngIf="!isRegionLocked" [(ngModel)]="formData.region" (change)="onRegionChange()" class="custom-select">
+          <option *ngFor="let r of regions" [value]="r.nom">{{ r.nom }}</option>
+        </select>
+        <small *ngIf="isRegionLocked" class="hint-locked">Collecte verrouillée sur votre région d'affectation.</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Département</label>
+          <select [(ngModel)]="formData.departement" (change)="onDepartementChange()" class="custom-select">
+            <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+          </select>
+        </div>
+        <div class="form-group half">
+          <label>Commune</label>
+          <select [(ngModel)]="formData.commune" class="custom-select">
+            <option *ngFor="let c of communes" [value]="c.nom">{{ c.nom }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Village ou Quartier</label>
+        <input type="text" [(ngModel)]="formData.village_quartier" placeholder="Ex: Village Centre" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Lieu précis de l'animation *</label>
+        <input type="text" [(ngModel)]="formData.lieu_animation" placeholder="Ex: Marché hebdomadaire (louma)" class="custom-input">
+      </div>
+
+      <div class="gps-box">
+        <button type="button" class="btn-gps" (click)="captureGps()" [disabled]="isCapturingGps">
+          <span>📍</span>
+          <span>Capturer position GPS de l'animation</span>
+        </button>
+        <div *ngIf="formData.latitude" class="gps-coords">
+          Lat : {{ formData.latitude | number:'1.4-4' }}, Lng : {{ formData.longitude | number:'1.4-4' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Date -->
+    <div class="form-section">
+      <div class="section-title">2. Date de l'animation</div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" [(ngModel)]="formData.date_animation" class="custom-input">
+      </div>
+    </div>
+
+    <!-- 3. Distributeur Bénéficiaire -->
+    <div class="form-section">
+      <div class="section-title">3. Distributeur(s) Bénéficiaire(s)</div>
+
+      <div class="form-group">
+        <label>Nom du distributeur</label>
+        <input type="text" [(ngModel)]="formData.distributeur_nom" placeholder="Ex: Moussa Diop" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Adresse du distributeur</label>
+        <input type="text" [(ngModel)]="formData.distributeur_adresse" placeholder="Ex: Marché central, cantine N°4" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Contact téléphonique</label>
+        <input type="tel" [(ngModel)]="formData.distributeur_contact" placeholder="+221 77..." class="custom-input">
+      </div>
+    </div>
+
+    <!-- 4. Animation & Matériel -->
+    <div class="form-section">
+      <div class="section-title">4. Déroulement & Équipe</div>
+
+      <div class="form-group">
+        <label>Matériel d'animation utilisé</label>
+        <textarea rows="2" [(ngModel)]="formData.materiel_utilise" placeholder="Mégaphone, banderole, modèles FA..." class="custom-textarea"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Prénom et Nom de l'animateur *</label>
+        <input type="text" [(ngModel)]="formData.animateur_nom" placeholder="Ex: Aminata Fall" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Contact animateur</label>
+        <input type="tel" [(ngModel)]="formData.animateur_contact" placeholder="+221 77..." class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Nombre de Foyers Améliorés vendus pendant l'animation *</label>
+        <input type="number" min="0" [(ngModel)]="formData.nb_fa_vendus" class="custom-input font-mono font-bold text-lg text-emerald-800">
+      </div>
+    </div>
+
+    <!-- 5. Signature Distributeur -->
+    <div class="form-section">
+      <div class="section-title">5. Signature Distributeur Bénéficiaire</div>
+      <p class="text-xs text-slate-500 mb-2">Signer directement avec le doigt sur l'écran :</p>
+
+      <div class="signature-wrapper">
+        <canvas #signatureCanvas 
+                width="320" 
+                height="130"
+                (mousedown)="startDrawing($event)"
+                (mousemove)="draw($event)"
+                (mouseup)="stopDrawing()"
+                (touchstart)="startDrawing($event)"
+                (touchmove)="draw($event)"
+                (touchend)="stopDrawing()"></canvas>
+      </div>
+      <button type="button" class="btn-clear" (click)="clearSignature()">Effacer la signature</button>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-draft" (click)="save(true)">
+        💾 Sauvegarder Brouillon
+      </button>
+      <button type="button" class="btn-submit" (click)="save(false)">
+        ✓ Valider la Fiche
+      </button>
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

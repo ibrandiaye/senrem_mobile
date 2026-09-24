@@ -1,0 +1,100 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-title>
+      <div class="header-branding">
+        <span class="logo-emoji">🔥</span>
+        <div>
+          <div class="app-title">SENRM Suivi</div>
+          <div class="app-sub">Enda ECOPOP &bull; Banque Mondiale</div>
+        </div>
+      </div>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="login-content">
+  <div class="login-container">
+    
+    <!-- Hero Box -->
+    <div class="login-hero">
+      <div class="hero-logo-box">
+        <span class="hero-logo">🔥</span>
+      </div>
+      <h2>Connexion Agent Terrain</h2>
+      <p>Projet de Gestion des Ressources Naturelles au Sénégal (SENRM)</p>
+      <div class="badge-offline-ready">
+        <span>⚡ Fonctionne en ligne et hors-ligne</span>
+      </div>
+    </div>
+
+    <!-- Error Box -->
+    <div *ngIf="errorMessage" class="error-alert">
+      <span class="error-icon">⚠️</span>
+      <div class="error-text">{{ errorMessage }}</div>
+    </div>
+
+    <!-- Login Form -->
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="email">Adresse Email de l'agent</label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉️</span>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            [(ngModel)]="email" 
+            placeholder="ex: animateur1@senrm-enda.org" 
+            required 
+            autocomplete="email"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            [(ngModel)]="password" 
+            placeholder="••••••••" 
+            required 
+            autocomplete="current-password"
+          />
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Se Connecter &rarr;</span>
+        <div *ngIf="isLoading" class="btn-loading">
+          <ion-spinner name="crescent" color="light"></ion-spinner>
+          <span>Connexion en cours...</span>
+        </div>
+      </button>
+    </form>
+
+    <!-- Info Note -->
+    <div class="login-info-card">
+      <div class="info-title">📍 Règle d'affectation régionale :</div>
+      <p class="info-desc">
+        Chaque agent de collecte est affecté par l'administrateur à <strong>une seule région</strong>. Vos formulaires seront automatiquement verrouillés sur votre zone d'intervention.
+      </p>
+    </div>
+
+    <div class="login-footer">
+      Enda ECOPOP &bull; Composante Foyers Améliorés
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="2500" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

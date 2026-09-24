@@ -1,0 +1,90 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="Accueil"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Mes Fiches Enregistrées</ion-title>
+    <ion-buttons slot="end">
+      <button class="nav-sync-btn" (click)="triggerSync()" [disabled]="isSyncing">
+        <span *ngIf="!isSyncing">🔄 Synchro</span>
+        <ion-spinner *ngIf="isSyncing" name="dots"></ion-spinner>
+      </button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-content">
+  <div class="form-container">
+
+    <!-- Filters header -->
+    <div class="filters-card">
+      <div class="filter-row">
+        <label>Type de fiche :</label>
+        <select [(ngModel)]="selectedType" class="filter-select">
+          <option value="all">Toutes les fiches</option>
+          <option value="ventes">Ventes Distributeurs</option>
+          <option value="animations">Animations - Ventes</option>
+          <option value="demonstrations">Démos Culinaires (GPF)</option>
+          <option value="caravanes">Caravanes</option>
+          <option value="emissions">Émissions Radios</option>
+          <option value="leaders">Leaders d'Opinion</option>
+        </select>
+      </div>
+
+      <div class="filter-row mt-2">
+        <label>Statut :</label>
+        <select [(ngModel)]="selectedStatus" class="filter-select">
+          <option value="all">Tous les statuts</option>
+          <option value="en_attente">⏳ En attente de synchro</option>
+          <option value="synchronise">✓ Synchronisé</option>
+          <option value="brouillon">📝 Brouillon</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Fiches List -->
+    <div class="list-count-label">
+      {{ filteredFiches.length }} enregistrement(s) trouvé(s)
+    </div>
+
+    <div class="fiches-list">
+      <div *ngFor="let f of filteredFiches" class="fiche-card">
+        <div class="fiche-header">
+          <span class="type-pill" [class]="'pill-' + f.type">{{ f.typeLabel }}</span>
+          <span class="status-pill" [class]="'status-' + f.sync_status">
+            <span *ngIf="f.sync_status === 'en_attente'">⏳ En attente</span>
+            <span *ngIf="f.sync_status === 'synchronise'">✓ Synchronisé</span>
+            <span *ngIf="f.sync_status === 'brouillon'">📝 Brouillon</span>
+          </span>
+        </div>
+
+        <div class="fiche-title">{{ f.title }}</div>
+        <div class="fiche-sub">{{ f.subtitle }}</div>
+
+        <div class="fiche-footer">
+          <div class="fiche-date">
+            Créé le : {{ f.client_created_at | date:'dd/MM/yyyy HH:mm' }}
+          </div>
+          <button class="btn-delete" (click)="deleteItem(f)">
+            Supprimer
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="filteredFiches.length === 0" class="empty-state">
+        <span class="empty-icon">📭</span>
+        <div class="empty-title">Aucune fiche trouvée</div>
+        <div class="empty-sub">Commencez une saisie à partir de l'écran d'accueil</div>
+      </div>
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

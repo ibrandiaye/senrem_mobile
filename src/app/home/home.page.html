@@ -1,0 +1,184 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-title>
+      <div class="header-branding">
+        <span class="logo-emoji">🔥</span>
+        <div>
+          <div class="app-title">SENRM Suivi</div>
+          <div class="app-sub">Enda ECOPOP &bull; Terrain</div>
+        </div>
+      </div>
+    </ion-title>
+
+    <div slot="end" class="network-badge-wrapper">
+      <span class="network-pill" [class.online]="isOnline" [class.offline]="!isOnline">
+        <span class="status-dot"></span>
+        {{ isOnline ? 'En ligne' : 'Hors-ligne' }}
+      </span>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="home-content">
+
+  <!-- Agent Profile Card -->
+  <div class="agent-profile-card" *ngIf="currentUser">
+    <div class="agent-avatar">
+      {{ (currentUser.name || 'AG').substring(0, 2).toUpperCase() }}
+    </div>
+    <div class="agent-details">
+      <div class="agent-name">{{ currentUser.name }}</div>
+      <div class="agent-meta">
+        <span class="agent-role">{{ currentUser.role === 'admin' ? 'Admin' : (currentUser.role === 'superviseur' ? 'Superviseur' : 'Animateur') }}</span>
+        <span class="agent-region">📍 Région : <strong>{{ currentUser.region || 'Toutes' }}</strong></span>
+      </div>
+    </div>
+    <button class="btn-logout" (click)="logout()" title="Se déconnecter">
+      <span>Déconnexion</span>
+    </button>
+  </div>
+
+  <!-- Cible 100 000 FA Banner -->
+  <div class="hero-card">
+    <div class="hero-top">
+      <div>
+        <span class="target-tag">Objectif National</span>
+        <h2 class="target-title">100 000 Foyers Améliorés</h2>
+      </div>
+      <div class="target-badge">
+        <span class="target-val">{{ macroStats?.total_foyers_diffuses || 229 }}</span>
+        <span class="target-lbl">FA diffusés</span>
+      </div>
+    </div>
+    
+    <div class="target-progress-area">
+      <div class="progress-labels">
+        <span>Taux de réalisation</span>
+        <span>{{ macroStats?.taux_realisation_pct || 0.23 }}%</span>
+      </div>
+      <div class="custom-progress-bar">
+        <div class="progress-fill" [style.width.%]="macroStats?.taux_realisation_pct || 0.5"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Synchronisation Card -->
+  <div class="sync-panel">
+    <div class="sync-info">
+      <div class="sync-icon-box" [class.has-pending]="pendingCount > 0">
+        <span *ngIf="!isSyncing">🔄</span>
+        <ion-spinner *ngIf="isSyncing" name="crescent" color="success"></ion-spinner>
+      </div>
+      <div>
+        <div class="sync-status-title">
+          <span *ngIf="pendingCount > 0" class="badge-pending">{{ pendingCount }} fiche(s) en attente</span>
+          <span *ngIf="pendingCount === 0" class="badge-synced">Toutes les fiches sont synchronisées</span>
+        </div>
+        <div class="sync-last-time">
+          {{ lastSyncTime ? ('Dernière synchro : ' + (lastSyncTime | date:'dd/MM HH:mm')) : 'Pas encore synchronisé' }}
+        </div>
+      </div>
+    </div>
+
+    <button 
+      class="sync-btn" 
+      [disabled]="isSyncing || (!isOnline && pendingCount === 0)"
+      (click)="triggerSync()">
+      <span *ngIf="isSyncing">Synchronisation...</span>
+      <span *ngIf="!isSyncing">Synchroniser</span>
+    </button>
+  </div>
+
+  <!-- Quick Access: Mes Fiches Enregistrées -->
+  <div class="my-records-banner" [routerLink]="['/mes-fiches']">
+    <div class="banner-left">
+      <span class="banner-icon">📁</span>
+      <div>
+        <div class="banner-title">Consulter mes fiches locales</div>
+        <div class="banner-sub">{{ totalLocalCount }} formulaire(s) stocké(s) sur ce téléphone</div>
+      </div>
+    </div>
+    <span class="banner-arrow">&rarr;</span>
+  </div>
+
+  <!-- Section: Fiches de saisie terrain -->
+  <div class="section-header">
+    <h3>Fiches de Collecte sur le Terrain</h3>
+    <p>Sélectionnez un formulaire pour démarrer une saisie hors-ligne</p>
+  </div>
+
+  <div class="forms-grid">
+    <!-- Form 1: Ventes Distributeurs -->
+    <div class="form-card" [routerLink]="['/form-ventes']">
+      <div class="card-icon-bubble card-green">🛒</div>
+      <div class="card-content">
+        <h4 class="card-name">Suivi Ventes Distributeurs</h4>
+        <p class="card-desc">Saisie des 10 modèles de FA vendus par les distributeurs agréés et relais.</p>
+        <span class="card-action">Ouvrir la fiche &rarr;</span>
+      </div>
+    </div>
+
+    <!-- Form 2: Animations - Ventes -->
+    <div class="form-card" [routerLink]="['/form-animations']">
+      <div class="card-icon-bubble card-blue">📢</div>
+      <div class="card-content">
+        <h4 class="card-name">Animations - Ventes</h4>
+        <p class="card-desc">Suivi des séances d'animation et de vente sur les marchés hebdomadaires.</p>
+        <span class="card-action">Ouvrir la fiche &rarr;</span>
+      </div>
+    </div>
+
+    <!-- Form 3: Démonstrations Culinaires -->
+    <div class="form-card" [routerLink]="['/form-demonstrations']">
+      <div class="card-icon-bubble card-pink">🍲</div>
+      <div class="card-content">
+        <h4 class="card-name">Démonstrations Culinaires</h4>
+        <p class="card-desc">Séances pratiques auprès des GPF, présence Hommes/Femmes et consentements.</p>
+        <span class="card-action">Ouvrir la fiche &rarr;</span>
+      </div>
+    </div>
+
+    <!-- Form 4: Caravanes -->
+    <div class="form-card" [routerLink]="['/form-caravanes']">
+      <div class="card-icon-bubble card-amber">🚚</div>
+      <div class="card-content">
+        <h4 class="card-name">Caravanes Mobiles</h4>
+        <p class="card-desc">Itinéraires, villages sillonnés, logistique sono/motos, dépliants et FA vendus.</p>
+        <span class="card-action">Ouvrir la fiche &rarr;</span>
+      </div>
+    </div>
+
+    <!-- Form 5: Émissions Radios -->
+    <div class="form-card" [routerLink]="['/form-emissions']">
+      <div class="card-icon-bubble card-purple">📻</div>
+      <div class="card-content">
+        <h4 class="card-name">Émissions Radios</h4>
+        <p class="card-desc">Radios partenaires, fréquences FM, thématiques et participants en plateau.</p>
+        <span class="card-action">Ouvrir la fiche &rarr;</span>
+      </div>
+    </div>
+
+    <!-- Form 6: Leaders d'Opinion -->
+    <div class="form-card" [routerLink]="['/form-leaders']">
+      <div class="card-icon-bubble card-teal">👤</div>
+      <div class="card-content">
+        <h4 class="card-name">Leaders d'Opinion</h4>
+        <p class="card-desc">Identification des personnalités influentes, associations et zones d'ancrage.</p>
+        <span class="card-action">Ouvrir la fiche &rarr;</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Projet SENRM &bull; Appui à la diffusion des FA par Enda ECOPOP
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+
+</ion-content>
