@@ -3,12 +3,17 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
     </ion-buttons>
-    <ion-title>Fiche Animation-Vente</ion-title>
+    <ion-title>{{ isEditingDraft ? 'Compléter le Brouillon' : 'Fiche Animation-Vente' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="form-content">
   <div class="form-container">
+
+    <!-- Draft Indicator -->
+    <div *ngIf="isEditingDraft" class="draft-indicator-banner">
+      <span>📝 Mode Brouillon : Complétez vos données et synchronisez</span>
+    </div>
 
     <div class="form-intro">
       <div class="intro-title">Suivi des Animations - Ventes</div>
@@ -40,7 +45,7 @@
         </div>
         <div class="form-group half">
           <label>Commune</label>
-          <select [(ngModel)]="formData.commune" class="custom-select">
+          <select [(ngModel)]="formData.commune" (change)="onCommuneChange()" class="custom-select">
             <option *ngFor="let c of communes" [value]="c.nom">{{ c.nom }}</option>
           </select>
         </div>
@@ -76,23 +81,93 @@
       </div>
     </div>
 
-    <!-- 3. Distributeur Bénéficiaire -->
+    <!-- 3. Distributeur(s) Bénéficiaire(s) -->
     <div class="form-section">
-      <div class="section-title">3. Distributeur(s) Bénéficiaire(s)</div>
-
-      <div class="form-group">
-        <label>Nom du distributeur</label>
-        <input type="text" [(ngModel)]="formData.distributeur_nom" placeholder="Ex: Moussa Diop" class="custom-input">
+      <div class="section-title-with-badge">
+        <div class="section-title">3. Distributeur(s) Bénéficiaire(s)</div>
+        <span class="total-bubble">{{ selectedDistributeurs.length }} sélectionné(s)</span>
       </div>
 
-      <div class="form-group">
-        <label>Adresse du distributeur</label>
-        <input type="text" [(ngModel)]="formData.distributeur_adresse" placeholder="Ex: Marché central, cantine N°4" class="custom-input">
+      <p class="section-help-text">
+        Vous pouvez sélectionner <strong>un ou plusieurs distributeurs</strong> bénéficiaires de cette animation.
+      </p>
+
+      <!-- Sélecteur dynamique des distributeurs affiliés à la commune (en cascade Région -> Département -> Commune) -->
+      <div class="form-group" *ngIf="formData.commune">
+        <label>
+          Distributeur(s) répertorié(s) dans cette commune
+          <span class="badge-count" *ngIf="distributeursCommune.length > 0">
+            {{ distributeursCommune.length }} affilié(s)
+          </span>
+        </label>
+
+        <select *ngIf="distributeursCommune.length > 0"
+                [(ngModel)]="pickerDistributeurId" 
+                (change)="onDistributeurPicked()" 
+                class="custom-select select-distributeur">
+          <option value="">-- Sélectionner un distributeur de {{ formData.commune }} --</option>
+          <option *ngFor="let d of distributeursCommune" [value]="d.id">
+            {{ d.nom }} ({{ d.statut }} • {{ d.telephone || 'Sans tél' }})
+          </option>
+          <option value="__NOUVEAU__">+ Nouveau distributeur (Saisie manuelle)</option>
+        </select>
+
+        <div class="info-alert" *ngIf="distributeursCommune.length === 0">
+          ℹ️ Aucun distributeur pré-enregistré dans la commune de <strong>{{ formData.commune }}</strong> ({{ formData.departement }}).
+          <div style="margin-top: 8px;" *ngIf="!showManualDistForm">
+            <button type="button" class="btn-confirm-manual" (click)="showManualDistForm = true">
+              + Nouveau distributeur (Saisie manuelle)
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label>Contact téléphonique</label>
-        <input type="tel" [(ngModel)]="formData.distributeur_contact" placeholder="+221 77..." class="custom-input">
+      <!-- Formulaire Ajout Manuel Hors-Base -->
+      <div *ngIf="showManualDistForm" class="manual-dist-box">
+        <div class="manual-dist-header">
+          <strong>+ Nouveau distributeur hors-base :</strong>
+        </div>
+        <div class="form-group mb-2">
+          <label>Nom et prénom du distributeur *</label>
+          <input type="text" [(ngModel)]="manualDist.nom" placeholder="Ex: Fatou Sow" class="custom-input">
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Téléphone</label>
+            <input type="tel" [(ngModel)]="manualDist.telephone" placeholder="+221 77..." class="custom-input">
+          </div>
+          <div class="form-group half">
+            <label>Adresse / Village</label>
+            <input type="text" [(ngModel)]="manualDist.adresse" placeholder="Ex: Marché central" class="custom-input">
+          </div>
+        </div>
+        <div class="manual-dist-actions">
+          <button type="button" class="btn-cancel-manual" (click)="cancelManualDist()">Annuler</button>
+          <button type="button" class="btn-confirm-manual" (click)="confirmManualDist()">✓ Ajouter à la liste</button>
+        </div>
+      </div>
+
+      <!-- Liste des distributeurs sélectionnés -->
+      <div class="selected-dist-list" *ngIf="selectedDistributeurs.length > 0">
+        <div *ngFor="let d of selectedDistributeurs; let i = index" class="selected-dist-card">
+          <div class="dist-card-left">
+            <div class="dist-card-title">
+              <span class="dist-name font-bold">{{ d.nom }}</span>
+              <span class="dist-statut-pill" *ngIf="d.statut">{{ d.statut }}</span>
+            </div>
+            <div class="dist-card-details">
+              <span class="detail-item" *ngIf="d.telephone">📞 {{ d.telephone }}</span>
+              <span class="detail-item" *ngIf="d.adresse">📍 {{ d.adresse }}</span>
+            </div>
+          </div>
+          <button type="button" class="btn-remove-dist" (click)="removeDistributeur(i)" title="Retirer de l'animation">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="empty-dist-banner" *ngIf="selectedDistributeurs.length === 0 && !showManualDistForm">
+        <span>ℹ️ Aucun distributeur sélectionné pour cette animation. Choisissez au moins un distributeur ci-dessus.</span>
       </div>
     </div>
 
@@ -102,16 +177,17 @@
 
       <div class="form-group">
         <label>Matériel d'animation utilisé</label>
-        <textarea rows="2" [(ngModel)]="formData.materiel_utilise" placeholder="Mégaphone, banderole, modèles FA..." class="custom-textarea"></textarea>
+        <textarea rows="2" [(ngModel)]="formData.materiel_utilise" placeholder="Ex: Sono mobile, mégaphone, banderoles, spécimens de foyers..." class="custom-textarea"></textarea>
       </div>
 
       <div class="form-group">
-        <label>Prénom et Nom de l'animateur *</label>
-        <input type="text" [(ngModel)]="formData.animateur_nom" placeholder="Ex: Aminata Fall" class="custom-input">
+        <label>Prénom et Nom de l'animateur (Sono / Prestation) *</label>
+        <input type="text" [(ngModel)]="formData.animateur_nom" placeholder="Ex: Nom de l'animateur sono..." class="custom-input">
+        <small class="hint-text">Nom de l'animateur de la sonorisation (prestataire local), distinct de l'agent du projet.</small>
       </div>
 
       <div class="form-group">
-        <label>Contact animateur</label>
+        <label>Contact animateur sono</label>
         <input type="tel" [(ngModel)]="formData.animateur_contact" placeholder="+221 77..." class="custom-input">
       </div>
 

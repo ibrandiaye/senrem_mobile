@@ -3,12 +3,17 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
     </ion-buttons>
-    <ion-title>Fiche Démonstrations Culinaires</ion-title>
+    <ion-title>{{ isEditingDraft ? 'Compléter le Brouillon' : 'Fiche Démonstrations Culinaires' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="form-content">
   <div class="form-container">
+
+    <!-- Draft Indicator -->
+    <div *ngIf="isEditingDraft" class="draft-indicator-banner">
+      <span>📝 Mode Brouillon : Complétez vos données et synchronisez</span>
+    </div>
 
     <div class="form-intro">
       <div class="intro-title">Démonstrations Culinaires (GPF)</div>
@@ -116,14 +121,30 @@
         <input type="text" [(ngModel)]="formData.presidente_nom" placeholder="Ex: Khady Cissé" class="custom-input">
       </div>
 
-      <div class="form-row">
-        <div class="form-group half">
-          <label>Téléphone Présidente</label>
-          <input type="tel" [(ngModel)]="formData.presidente_contact" placeholder="+221 77..." class="custom-input">
-        </div>
-        <div class="form-group half">
-          <label>Âge</label>
-          <input type="number" [(ngModel)]="formData.presidente_age" placeholder="Ex: 45" class="custom-input">
+      <div class="form-group">
+        <label>Téléphone Présidente</label>
+        <input type="tel" [(ngModel)]="formData.presidente_contact" placeholder="+221 77..." class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Âge de la Présidente (Tranche d'âge) *</label>
+        <div class="age-toggle-group">
+          <button type="button" 
+                  class="age-btn" 
+                  [class.active]="formData.presidente_age === 'Moins 35 ans'" 
+                  (click)="setAge('Moins 35 ans')">
+            <span class="age-icon">🌱</span>
+            <span class="age-label">Moins 35 ans</span>
+            <span class="age-sub">Moins de 35 ans (&lt; 35 ans)</span>
+          </button>
+          <button type="button" 
+                  class="age-btn" 
+                  [class.active]="formData.presidente_age === '35 ans et plus'" 
+                  (click)="setAge('35 ans et plus')">
+            <span class="age-icon">👩</span>
+            <span class="age-label">35 ans et plus</span>
+            <span class="age-sub">35 ans et plus (≥ 35 ans)</span>
+          </button>
         </div>
       </div>
     </div>
@@ -158,8 +179,20 @@
     <!-- 7. Responsable -->
     <div class="form-section">
       <div class="section-title">7. Responsable de l'Activité</div>
+
       <div class="form-group">
-        <label>Nom du responsable de collecte *</label>
+        <label>Nom du responsable de collecte (Animateurs de la région) *</label>
+        <select [(ngModel)]="selectedResponsable" (change)="onResponsableChange()" class="custom-select">
+          <option value="">-- Sélectionner un animateur de {{ formData.region || 'la région' }} --</option>
+          <option *ngFor="let a of animateursRegion" [value]="a.nom">
+            {{ a.nom }} {{ a.role ? '(' + a.role + ')' : '' }}
+          </option>
+          <option value="__autre__">+ Saisir un autre responsable...</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="isAutreResponsable">
+        <label>Préciser le Nom et Prénom du responsable *</label>
         <input type="text" [(ngModel)]="formData.responsable_nom" placeholder="Ex: Aminata Sarr" class="custom-input">
       </div>
     </div>

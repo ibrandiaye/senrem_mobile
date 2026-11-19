@@ -1,0 +1,171 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ isEditingDraft ? 'Compléter le Brouillon' : 'Fiche Acteurs Locaux (LME)' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-content">
+  <div class="form-container">
+
+    <!-- Draft Indicator -->
+    <div *ngIf="isEditingDraft" class="draft-indicator-banner">
+      <span>📝 Mode Brouillon : Complétez vos données et synchronisez</span>
+    </div>
+
+    <!-- Type Switcher (Nouveau Enrôlé vs Redynamisé) -->
+    <div class="type-selector-card">
+      <div class="type-selector-label">Indicateur Contractuel LME :</div>
+      <div class="type-toggle-group">
+        <button 
+          type="button" 
+          class="type-toggle-btn" 
+          [class.active-green]="formData.type_indicateur === 'nouveau'"
+          (click)="setType('nouveau')">
+          <span class="btn-icon">🟢</span>
+          <span>Nouveau LME enrôlé</span>
+        </button>
+        <button 
+          type="button" 
+          class="type-toggle-btn" 
+          [class.active-blue]="formData.type_indicateur === 'redynamise'"
+          (click)="setType('redynamise')">
+          <span class="btn-icon">🔄</span>
+          <span>LME redynamisé</span>
+        </button>
+      </div>
+      <div class="type-help-hint">
+        <span *ngIf="formData.type_indicateur === 'nouveau'">Cible contractuelle : 50 nouveaux LME enrôlés qui vendent des FA.</span>
+        <span *ngIf="formData.type_indicateur === 'redynamise'">Cible contractuelle : 100 LME redynamisés dans la vente de FA.</span>
+      </div>
+    </div>
+
+    <!-- 1. Date de l'action -->
+    <div class="form-section">
+      <div class="section-title">1. Date & Référence</div>
+      <div class="form-group">
+        <label>{{ formData.type_indicateur === 'nouveau' ? 'Date d\'enrôlement *' : 'Date de redynamisation *' }}</label>
+        <input type="date" [(ngModel)]="formData.date_action" class="custom-input">
+      </div>
+    </div>
+
+    <!-- 2. Informations du LME -->
+    <div class="form-section">
+      <div class="section-title">2. Identification de l'Acteur Local (LME)</div>
+
+      <div class="form-group">
+        <label>Nom du LME *</label>
+        <input type="text" [(ngModel)]="formData.nom_lme" placeholder="Nom complet de l'acteur ou commerce local" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Activité Principale</label>
+        <input type="text" [(ngModel)]="formData.activite_principale" placeholder="Ex: Quincaillerie, Boutique alimentation, Dépôt gaz..." class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Téléphone LME</label>
+        <input type="tel" [(ngModel)]="formData.telephone" placeholder="Ex: 77 987 65 43" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Âge de l'Acteur LME (Tranche d'âge)</label>
+        <div class="age-toggle-group">
+          <button type="button" 
+                  class="age-btn" 
+                  [class.active]="formData.age === '- 35 ans' || formData.age === 'Moins 35 ans' || formData.age === '< 35 ans'" 
+                  (click)="setAge('- 35 ans')">
+            <span class="age-icon">🌱</span>
+            <span class="age-label">- 35 ans</span>
+            <span class="age-sub">Moins de 35 ans (&lt; 35 ans)</span>
+          </button>
+          <button type="button" 
+                  class="age-btn" 
+                  [class.active]="formData.age === 'plus de 35 ans' || formData.age === 'Plus de 35 ans' || formData.age === '35 ans et plus' || formData.age === '+ 35 ans'" 
+                  (click)="setAge('plus de 35 ans')">
+            <span class="age-icon">👤</span>
+            <span class="age-label">plus de 35 ans</span>
+            <span class="age-sub">Plus de 35 ans (≥ 35 ans)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Localisation -->
+    <div class="form-section">
+      <div class="section-title">3. Localisation Géographique</div>
+
+      <div class="form-group">
+        <label>
+          Région *
+          <span class="badge-lock" *ngIf="isRegionLocked">🔒 Affectation Fixée</span>
+        </label>
+        <input *ngIf="isRegionLocked" type="text" [value]="formData.region" readonly class="custom-input locked-input">
+        <select *ngIf="!isRegionLocked" [(ngModel)]="formData.region" (change)="onRegionChange()" class="custom-select">
+          <option *ngFor="let r of regions" [value]="r.nom">{{ r.nom }}</option>
+        </select>
+        <small *ngIf="isRegionLocked" class="hint-locked">Collecte verrouillée sur votre région d'affectation.</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Département *</label>
+          <select [(ngModel)]="formData.departement" (change)="onDepartementChange()" class="custom-select">
+            <option value="">Sélectionner</option>
+            <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+          </select>
+        </div>
+        <div class="form-group half">
+          <label>Commune *</label>
+          <select [(ngModel)]="selectedCommune" (change)="onCommuneChange()" class="custom-select">
+            <option value="">-- Choisir la commune --</option>
+            <option *ngFor="let c of communes" [value]="c.nom">{{ c.nom }}</option>
+            <option value="__autre__">+ Saisir une autre commune...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="isAutreCommune">
+        <label>Nom de la commune (Autre) *</label>
+        <input type="text" [(ngModel)]="formData.commune" placeholder="Préciser le nom de la commune" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Village ou quartier</label>
+        <input type="text" [(ngModel)]="formData.village_quartier" placeholder="Ex: Quartier Marché / Village" class="custom-input">
+      </div>
+
+      <div class="gps-box mt-3">
+        <button type="button" class="btn-gps" (click)="captureGps()" [disabled]="isCapturingGps">
+          <span>📍</span>
+          <span *ngIf="!isCapturingGps">Capturer les coordonnées GPS du LME</span>
+          <span *ngIf="isCapturingGps">Acquisition satellite en cours...</span>
+        </button>
+        <div *ngIf="formData.latitude" class="gps-coords">
+          Lat : {{ formData.latitude | number:'1.4-4' }}, Lng : {{ formData.longitude | number:'1.4-4' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-draft" (click)="save(true)">
+        💾 Sauvegarder Brouillon
+      </button>
+      <button type="button" class="btn-submit" (click)="save(false)">
+        ✓ Valider la Fiche LME
+      </button>
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

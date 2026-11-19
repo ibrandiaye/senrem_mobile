@@ -3,12 +3,17 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
     </ion-buttons>
-    <ion-title>Fiche Suivi Caravanes</ion-title>
+    <ion-title>{{ isEditingDraft ? 'Compléter le Brouillon' : 'Fiche Suivi Caravanes' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="form-content">
   <div class="form-container">
+
+    <!-- Draft Indicator -->
+    <div *ngIf="isEditingDraft" class="draft-indicator-banner">
+      <span>📝 Mode Brouillon : Complétez vos données et synchronisez</span>
+    </div>
 
     <div class="form-intro">
       <div class="intro-title">Caravanes Mobiles de Sensibilisation</div>
@@ -31,11 +36,20 @@
         <small *ngIf="isRegionLocked" class="hint-locked">Collecte verrouillée sur votre région d'affectation.</small>
       </div>
 
-      <div class="form-group">
-        <label>Département</label>
-        <select [(ngModel)]="formData.departement" class="custom-select">
-          <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
-        </select>
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Département</label>
+          <select [(ngModel)]="formData.departement" (change)="onDepartementChange()" class="custom-select">
+            <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+          </select>
+        </div>
+
+        <div class="form-group half">
+          <label>Commune</label>
+          <select [(ngModel)]="formData.commune" (change)="onCommuneChange()" class="custom-select">
+            <option *ngFor="let c of communes" [value]="c.nom">{{ c.nom }}</option>
+          </select>
+        </div>
       </div>
 
       <div class="form-group">
@@ -53,31 +67,119 @@
           <input type="time" [(ngModel)]="formData.heure_fin" class="custom-input">
         </div>
       </div>
+      <div class="gps-box mt-3">
+        <button type="button" class="btn-gps" (click)="captureGps()" [disabled]="isCapturingGps">
+          <span>📍</span>
+          <span *ngIf="!isCapturingGps">Capturer les coordonnées GPS de départ</span>
+          <span *ngIf="isCapturingGps">Acquisition satellite en cours...</span>
+        </button>
+        <div *ngIf="formData.latitude" class="gps-coords">
+          Lat : {{ formData.latitude | number:'1.4-4' }}, Lng : {{ formData.longitude | number:'1.4-4' }}
+        </div>
+      </div>
     </div>
 
     <!-- 2. Distributeurs & Itinéraire -->
     <div class="form-section">
-      <div class="section-title">2. Distributeurs & Itinéraire</div>
-
-      <div class="form-group">
-        <label>Distributeur(s) bénéficiaire(s)</label>
-        <input type="text" [(ngModel)]="formData.distributeurs_beneficiaires" placeholder="Noms des distributeurs appuyés" class="custom-input">
+      <div class="section-title-with-badge">
+        <div class="section-title">2. Distributeur(s) Bénéficiaire(s) & Itinéraire</div>
+        <span class="total-bubble">{{ selectedDistributeurs.length }} sélectionné(s)</span>
       </div>
 
-      <div class="form-group">
-        <label>Contact(s) distributeur(s)</label>
-        <input type="text" [(ngModel)]="formData.distributeurs_contacts" placeholder="Téléphones..." class="custom-input">
+      <p class="section-help-text">
+        Sélectionnez <strong>un ou plusieurs distributeurs</strong> appuyés lors de cette caravane :
+      </p>
+
+      <!-- Sélecteur dynamique des distributeurs affiliés à la commune (en cascade Région -> Département -> Commune) -->
+      <div class="form-group" *ngIf="formData.commune">
+        <label>
+          Distributeur(s) répertorié(s) dans cette commune
+          <span class="badge-count" *ngIf="distributeursCommune.length > 0">
+            {{ distributeursCommune.length }} affilié(s)
+          </span>
+        </label>
+
+        <select *ngIf="distributeursCommune.length > 0"
+                [(ngModel)]="pickerDistributeurId" 
+                (change)="onDistributeurPicked()" 
+                class="custom-select select-distributeur">
+          <option value="">-- Sélectionner un distributeur de {{ formData.commune }} --</option>
+          <option *ngFor="let d of distributeursCommune" [value]="d.id">
+            {{ d.nom }} ({{ d.statut }} • {{ d.telephone || 'Sans tél' }})
+          </option>
+          <option value="__NOUVEAU__">+ Nouveau distributeur (Saisie manuelle)</option>
+        </select>
+
+        <div class="info-alert" *ngIf="distributeursCommune.length === 0">
+          ℹ️ Aucun distributeur pré-enregistré dans la commune de <strong>{{ formData.commune }}</strong> ({{ formData.departement }}).
+          <div style="margin-top: 8px;" *ngIf="!showManualDistForm">
+            <button type="button" class="btn-confirm-manual" (click)="showManualDistForm = true">
+              + Nouveau distributeur (Saisie manuelle)
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label>Itinéraire de la caravane *</label>
+      <!-- Formulaire Ajout Manuel -->
+      <div *ngIf="showManualDistForm" class="manual-dist-box">
+        <div class="manual-dist-header">
+          <strong>+ Nouveau distributeur hors-base :</strong>
+        </div>
+        <div class="form-group mb-2">
+          <label>Nom et prénom du distributeur *</label>
+          <input type="text" [(ngModel)]="manualDist.nom" placeholder="Ex: Moussa Diop" class="custom-input">
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label>Téléphone</label>
+            <input type="tel" [(ngModel)]="manualDist.telephone" placeholder="+221 77..." class="custom-input">
+          </div>
+          <div class="form-group half">
+            <label>Adresse / Village</label>
+            <input type="text" [(ngModel)]="manualDist.adresse" placeholder="Ex: Marché / Commune" class="custom-input">
+          </div>
+        </div>
+        <div class="manual-dist-actions">
+          <button type="button" class="btn-cancel-manual" (click)="cancelManualDist()">Annuler</button>
+          <button type="button" class="btn-confirm-manual" (click)="confirmManualDist()">✓ Ajouter à la caravane</button>
+        </div>
+      </div>
+
+      <!-- Liste des distributeurs sélectionnés -->
+      <div class="selected-dist-list" *ngIf="selectedDistributeurs.length > 0">
+        <div *ngFor="let d of selectedDistributeurs; let i = index" class="selected-dist-card">
+          <div class="dist-card-left">
+            <div class="dist-card-title">
+              <span class="dist-name font-bold">{{ d.nom }}</span>
+              <span class="dist-statut-pill" *ngIf="d.statut">{{ d.statut }}</span>
+            </div>
+            <div class="dist-card-details">
+              <span class="detail-item" *ngIf="d.telephone">📞 {{ d.telephone }}</span>
+              <span class="detail-item" *ngIf="d.adresse">📍 {{ d.adresse }}</span>
+            </div>
+          </div>
+          <button type="button" class="btn-remove-dist" (click)="removeDistributeur(i)" title="Retirer de la caravane">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="empty-dist-banner" *ngIf="selectedDistributeurs.length === 0 && !showManualDistForm">
+        <span>ℹ️ Aucun distributeur associé pour le moment. Choisissez dans la liste déroulante ci-dessus.</span>
+      </div>
+
+      <div class="form-group mt-3">
+        <label>Itinéraire précis de la caravane *</label>
         <textarea rows="2" [(ngModel)]="formData.itineraire" placeholder="Départ place publique -> Village X -> Village Y..." class="custom-textarea"></textarea>
       </div>
     </div>
 
-    <!-- 3. Logistique -->
+    <!-- 3. Moyens & Supports de Communication (Logistique) -->
     <div class="form-section">
-      <div class="section-title">3. Moyens & Logistique Utilisés</div>
+      <div class="section-title">3. Moyens & Supports de Communication (Logistique)</div>
+      <p class="section-help-text">
+        Cochez les moyens logistiques et supports de communication mobilisés :
+      </p>
 
       <div class="chips-container">
         <button 
@@ -86,57 +188,128 @@
           class="chip-btn" 
           [class.selected]="hasMoyen(m)" 
           (click)="toggleMoyen(m)">
-          <span *ngIf="hasMoyen(m)">✓</span> {{ m }}
+          <span *ngIf="hasMoyen(m)">✓</span> {{ m === 'Autres' ? 'Autres (à préciser)' : m }}
         </button>
+      </div>
+
+      <!-- Champ de précision si "Autres" est sélectionné -->
+      <div class="form-group mt-3" *ngIf="hasMoyen('Autres')">
+        <label>Autres moyens / supports de communication (à préciser) *</label>
+        <input type="text" [(ngModel)]="formData.moyens_autres" placeholder="Précisez les autres moyens mobilisés..." class="custom-input">
       </div>
     </div>
 
-    <!-- 4. Villages Sillonnés (Dynamique) -->
+    <!-- 4. Villages / Quartiers Sillonnés (Dynamique) -->
     <div class="form-section">
       <div class="section-title-with-badge">
-        <div class="section-title">4. Villages / Quartiers Touchés</div>
-        <span class="total-bubble">{{ villagesTouches.length }} village(s)</span>
+        <div class="section-title">4. Villages / Quartiers Sillonnés</div>
+        <span class="total-bubble">{{ formData.nb_villages_sillonnes || villagesTouches.length }} au total</span>
       </div>
+      <p class="section-help-text">
+        Pour chaque localité sillonnée, indiquez son nom et choisissez <strong>« V » pour Village</strong> ou <strong>« Q » pour Quartier</strong> :
+      </p>
 
       <div class="villages-list">
         <div *ngFor="let v of villagesTouches; let idx = index" class="village-item">
           <div class="village-num">{{ idx + 1 }}</div>
           <div class="village-inputs">
-            <input type="text" [(ngModel)]="v.nom_village_quartier" placeholder="Nom du village / quartier *" class="custom-input">
-            <input type="text" [(ngModel)]="v.commune_ou_zone" placeholder="Commune ou zone" class="custom-input mt-1">
+            <input type="text" [(ngModel)]="v.nom_village_quartier" placeholder="Nom du village ou quartier *" class="custom-input">
+            <div class="age-choice-group mt-1">
+              <button type="button"
+                      class="age-choice-btn"
+                      [class.selected]="v.commune_ou_zone !== 'Q'"
+                      (click)="setVillageType(idx, 'V')">
+                <span class="age-radio-dot"></span>
+                <span><strong>V</strong> (Village)</span>
+              </button>
+              <button type="button"
+                      class="age-choice-btn"
+                      [class.selected]="v.commune_ou_zone === 'Q'"
+                      (click)="setVillageType(idx, 'Q')">
+                <span class="age-radio-dot"></span>
+                <span><strong>Q</strong> (Quartier)</span>
+              </button>
+            </div>
           </div>
           <button type="button" class="btn-remove" (click)="removeVillage(idx)" *ngIf="villagesTouches.length > 1">✕</button>
         </div>
       </div>
 
       <button type="button" class="btn-add" (click)="addVillage()">
-        + Ajouter un autre village sillonnés
+        + Ajouter un autre village / quartier sillonné
       </button>
+
+      <div class="form-group mt-3">
+        <label>Nombre total de villages / quartiers sillonnés *</label>
+        <input type="number" min="1" [(ngModel)]="formData.nb_villages_sillonnes" class="custom-input font-mono font-bold text-lg text-emerald-800">
+      </div>
     </div>
 
     <!-- 5. Supports de communication & Ventes -->
     <div class="form-section">
-      <div class="section-title">5. Supports & Résultats de Vente</div>
+      <div class="section-title">5. Supports de Communication & Résultats de Vente</div>
+      <p class="section-help-text">
+        Sélectionnez et renseignez les supports de communication distribués (<strong>Tee-shirt, Casquettes, Seaux, Bassines, Autre à préciser</strong>) :
+      </p>
+
+      <div class="chips-container mb-3">
+        <button 
+          type="button" 
+          *ngFor="let s of supportsDisponibles" 
+          class="chip-btn" 
+          [class.selected]="hasSupport(s)" 
+          (click)="toggleSupport(s)">
+          <span *ngIf="hasSupport(s)">✓</span> {{ s === 'Autre' ? 'Autre (à préciser)' : s }}
+        </button>
+      </div>
 
       <div class="form-row">
         <div class="form-group half">
-          <label>Nombre d'Affiches</label>
-          <input type="number" min="0" [(ngModel)]="formData.supports_affiches" class="custom-input font-mono">
+          <label>Tee-shirt (Nombre)</label>
+          <input type="number" min="0" [(ngModel)]="formData.supports_tshirts" (ngModelChange)="onSupportQtyChange('Tee-shirt', $event)" class="custom-input font-mono">
         </div>
         <div class="form-group half">
-          <label>Nombre de Dépliants</label>
-          <input type="number" min="0" [(ngModel)]="formData.supports_depliants" class="custom-input font-mono">
+          <label>Casquettes (Nombre)</label>
+          <input type="number" min="0" [(ngModel)]="formData.supports_casquettes" (ngModelChange)="onSupportQtyChange('Casquettes', $event)" class="custom-input font-mono">
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-row mt-2">
+        <div class="form-group half">
+          <label>Seaux (Nombre)</label>
+          <input type="number" min="0" [(ngModel)]="formData.supports_seaux" (ngModelChange)="onSupportQtyChange('Seaux', $event)" class="custom-input font-mono">
+        </div>
+        <div class="form-group half">
+          <label>Bassines (Nombre)</label>
+          <input type="number" min="0" [(ngModel)]="formData.supports_bassines" (ngModelChange)="onSupportQtyChange('Bassines', $event)" class="custom-input font-mono">
+        </div>
+      </div>
+
+      <div class="form-row mt-2">
+        <div class="form-group half">
+          <label>Autre support (à préciser)</label>
+          <input type="text" [(ngModel)]="formData.supports_autres_libelle" (ngModelChange)="onSupportQtyChange('Autre', $event ? 1 : 0)" placeholder="Précisez l'autre support..." class="custom-input">
+        </div>
+        <div class="form-group half">
+          <label>Nombre (Autre)</label>
+          <input type="number" min="0" [(ngModel)]="formData.supports_autres_nb" (ngModelChange)="onSupportQtyChange('Autre', $event)" class="custom-input font-mono">
+        </div>
+      </div>
+
+      <div class="form-group mt-3">
         <label>Nombre de FA Vendus pendant la caravane *</label>
         <input type="number" min="0" [(ngModel)]="formData.nb_fa_vendus" class="custom-input font-mono font-black text-xl text-emerald-800">
       </div>
 
       <div class="form-group">
-        <label>Responsable de la collecte *</label>
-        <input type="text" [(ngModel)]="formData.responsable_nom" placeholder="Prénom et Nom" class="custom-input">
+        <label>Prénom et Nom de l'animateur (Sono / Prestation) *</label>
+        <input type="text" [(ngModel)]="formData.responsable_nom" placeholder="Ex: Nom de l'animateur sono..." class="custom-input">
+        <small class="hint-text">Nom de l'animateur de la sonorisation (prestataire local), distinct de l'agent du projet.</small>
+      </div>
+
+      <div class="form-group">
+        <label>Contact animateur (Sono / Prestataire)</label>
+        <input type="tel" [(ngModel)]="formData.responsable_contact" placeholder="+221 77..." class="custom-input">
       </div>
     </div>
 

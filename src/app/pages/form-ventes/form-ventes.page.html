@@ -3,12 +3,17 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
     </ion-buttons>
-    <ion-title>Fiche Suivi Distributeurs</ion-title>
+    <ion-title>{{ isEditingDraft ? 'Compléter le Brouillon' : 'Fiche Suivi Distributeurs' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="form-content">
   <div class="form-container">
+
+    <!-- Draft Indicator -->
+    <div *ngIf="isEditingDraft" class="draft-indicator-banner">
+      <span>📝 Mode Brouillon : Complétez vos données et synchronisez</span>
+    </div>
 
     <!-- Form Intro Card -->
     <div class="form-intro">
@@ -16,36 +21,9 @@
       <div class="intro-sub">Fiche de suivi conforme au canevas national SENRM / Enda ECOPOP</div>
     </div>
 
-    <!-- Section 1 : Distributeur -->
+    <!-- Section 1 : Localisation Administrative -->
     <div class="form-section">
-      <div class="section-title">1. Informations Distributeur</div>
-
-      <div class="form-group">
-        <label>Nom et Prénom du Distributeur *</label>
-        <input type="text" [(ngModel)]="formData.distributeur_nom" placeholder="Ex: Moussa Diop" class="custom-input">
-      </div>
-
-      <div class="form-row">
-        <div class="form-group half">
-          <label>Statut</label>
-          <select [(ngModel)]="formData.distributeur_statut" class="custom-select">
-            <option value="Distributeur Agréé">Distributeur Agréé</option>
-            <option value="Relais Communautaire">Relais Communautaire</option>
-            <option value="GPF Partenaire">GPF Partenaire</option>
-            <option value="Artisan Forgeron">Artisan Forgeron</option>
-          </select>
-        </div>
-
-        <div class="form-group half">
-          <label>Téléphone</label>
-          <input type="tel" [(ngModel)]="formData.distributeur_telephone" placeholder="+221 77..." class="custom-input">
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 2 : Localisation Administrative -->
-    <div class="form-section">
-      <div class="section-title">2. Localisation Géographique</div>
+      <div class="section-title">1. Localisation Géographique</div>
 
       <div class="form-group">
         <label>
@@ -68,8 +46,8 @@
         </div>
 
         <div class="form-group half">
-          <label>Commune</label>
-          <select [(ngModel)]="formData.commune" class="custom-select">
+          <label>Commune *</label>
+          <select [(ngModel)]="formData.commune" (change)="onCommuneChange()" class="custom-select">
             <option *ngFor="let c of communes" [value]="c.nom">{{ c.nom }}</option>
           </select>
         </div>
@@ -93,6 +71,60 @@
         </button>
         <div *ngIf="formData.latitude" class="gps-coords">
           Lat : {{ formData.latitude | number:'1.4-4' }}, Lng : {{ formData.longitude | number:'1.4-4' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2 : Distributeur (Chargé dynamiquement selon la commune) -->
+    <div class="form-section">
+      <div class="section-title">
+        2. Informations Distributeur
+      </div>
+
+      <!-- Sélecteur dynamique des distributeurs affiliés à la commune -->
+      <div class="form-group" *ngIf="formData.commune">
+        <label>
+          Distributeur répertorié dans cette commune
+          <span class="badge-count" *ngIf="distributeursCommune.length > 0">
+            {{ distributeursCommune.length }} affilié(s)
+          </span>
+        </label>
+        
+        <select *ngIf="distributeursCommune.length > 0" 
+                [(ngModel)]="selectedDistributeurId" 
+                (change)="onDistributeurSelected()" 
+                class="custom-select select-distributeur">
+          <option value="">-- Sélectionner un distributeur de {{ formData.commune }} --</option>
+          <option *ngFor="let d of distributeursCommune" [value]="d.id">
+            {{ d.nom }} ({{ d.statut }} • {{ d.telephone || 'Sans tél' }})
+          </option>
+          <option value="__NOUVEAU__">+ Nouveau distributeur (Saisie manuelle)</option>
+        </select>
+
+        <div class="info-alert" *ngIf="distributeursCommune.length === 0">
+          ℹ️ Aucun distributeur pré-enregistré dans la commune de <strong>{{ formData.commune }}</strong>. Renseignez directement son nom et ses coordonnées ci-dessous :
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nom et Prénom du Distributeur *</label>
+        <input type="text" [(ngModel)]="formData.distributeur_nom" placeholder="Ex: Moussa Diop" class="custom-input">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Statut</label>
+          <select [(ngModel)]="formData.distributeur_statut" class="custom-select">
+            <option value="LME">LME</option>
+            <option value="GPF">GPF</option>
+            <option value="Grossiste">Grossiste</option>
+            <option value="Autre détaillant">Autre détaillant</option>
+          </select>
+        </div>
+
+        <div class="form-group half">
+          <label>Téléphone</label>
+          <input type="tel" [(ngModel)]="formData.distributeur_telephone" placeholder="+221 77..." class="custom-input">
         </div>
       </div>
     </div>

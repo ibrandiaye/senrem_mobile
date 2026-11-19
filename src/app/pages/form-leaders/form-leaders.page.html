@@ -3,12 +3,17 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
     </ion-buttons>
-    <ion-title>Fiche Leaders d'Opinion</ion-title>
+    <ion-title>{{ isEditingDraft ? 'Compléter le Brouillon' : 'Fiche Leaders d\'Opinion' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="form-content">
   <div class="form-container">
+
+    <!-- Draft Indicator -->
+    <div *ngIf="isEditingDraft" class="draft-indicator-banner">
+      <span>📝 Mode Brouillon : Complétez vos données et synchronisez</span>
+    </div>
 
     <div class="form-intro">
       <div class="intro-title">Identification des Leaders d'Opinion</div>
@@ -125,8 +130,20 @@
     <!-- 4. Responsable -->
     <div class="form-section">
       <div class="section-title">4. Responsable de l'Activité</div>
+
       <div class="form-group">
-        <label>Nom du responsable de collecte *</label>
+        <label>Nom du responsable de collecte (Animateurs de la région) *</label>
+        <select [(ngModel)]="selectedResponsable" (change)="onResponsableChange()" class="custom-select">
+          <option value="">-- Sélectionner un animateur de {{ formData.region || 'la région' }} --</option>
+          <option *ngFor="let a of animateursRegion" [value]="a.nom">
+            {{ a.nom }} {{ a.role ? '(' + a.role + ')' : '' }}
+          </option>
+          <option value="__autre__">+ Saisir un autre responsable...</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="isAutreResponsable">
+        <label>Préciser le Nom et Prénom du responsable *</label>
         <input type="text" [(ngModel)]="formData.responsable_nom" placeholder="Prénom et Nom" class="custom-input">
       </div>
     </div>

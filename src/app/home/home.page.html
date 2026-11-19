@@ -38,27 +38,55 @@
     </button>
   </div>
 
-  <!-- Cible 100 000 FA Banner -->
+  <!-- Cible FA Banner adaptée à la région de l'agent -->
   <div class="hero-card">
+    <!-- Onglets de bascule rapide par région pour admin/superviseur ou sans région fixe -->
+    <div class="hero-region-tabs" *ngIf="canSwitchRegionView">
+      <button type="button" class="tab-btn" [class.active]="effectiveRegion === 'Tambacounda'" (click)="setRegionView('Tambacounda')">
+        Tambacounda (60 000 FA)
+      </button>
+      <button type="button" class="tab-btn" [class.active]="effectiveRegion === 'Kédougou'" (click)="setRegionView('Kédougou')">
+        Kédougou (40 000 FA)
+      </button>
+    </div>
+
     <div class="hero-top">
       <div>
-        <span class="target-tag">Objectif National</span>
-        <h2 class="target-title">100 000 Foyers Améliorés</h2>
+        <span class="target-tag">
+          Objectif Régional &bull; {{ targetRegionName }}
+        </span>
+        <h2 class="target-title">{{ targetCibleFoyers | number }} Foyers Améliorés</h2>
       </div>
       <div class="target-badge">
-        <span class="target-val">{{ macroStats?.total_foyers_diffuses || 229 }}</span>
-        <span class="target-lbl">FA diffusés</span>
+        <span class="target-val">{{ totalFoyersDiffuses | number }}</span>
+        <span class="target-lbl">FA diffusés ({{ targetRegionShortName }})</span>
       </div>
     </div>
     
     <div class="target-progress-area">
       <div class="progress-labels">
-        <span>Taux de réalisation</span>
-        <span>{{ macroStats?.taux_realisation_pct || 0.23 }}%</span>
+        <span>Niveau d'avancement (Objectif {{ targetCibleFoyers | number }} FA &bull; {{ targetRegionShortName }})</span>
+        <span class="pct-val">{{ tauxRealisationPct }}%</span>
       </div>
       <div class="custom-progress-bar">
-        <div class="progress-fill" [style.width.%]="macroStats?.taux_realisation_pct || 0.5"></div>
+        <div class="progress-fill" [style.width.%]="tauxRealisationPct > 100 ? 100 : tauxRealisationPct"></div>
       </div>
+    </div>
+
+    <div class="hero-sub-stats">
+      <div class="sub-stat-item">
+        <span class="sub-stat-label">Objectif {{ targetRegionShortName }} :</span>
+        <span class="sub-stat-val"><strong>{{ targetCibleFoyers | number }} FA</strong></span>
+      </div>
+      <div class="sub-stat-separator">&bull;</div>
+      <div class="sub-stat-item">
+        <span class="sub-stat-label">Reste à diffuser :</span>
+        <span class="sub-stat-val"><strong>{{ ecartFoyers | number }} FA</strong></span>
+      </div>
+    </div>
+
+    <div class="hero-pending-pill" *ngIf="pendingLocalFaRegion > 0">
+      <span>⏳ <strong>+{{ pendingLocalFaRegion | number }} FA</strong> saisis en local (en attente de synchro)</span>
     </div>
   </div>
 
@@ -99,6 +127,18 @@
       </div>
     </div>
     <span class="banner-arrow">&rarr;</span>
+  </div>
+
+  <!-- Drafts Alert Banner if drafts exist -->
+  <div *ngIf="draftCount > 0" class="my-records-banner draft-banner-alert" [routerLink]="['/mes-fiches']" [queryParams]="{ status: 'brouillon' }">
+    <div class="banner-left">
+      <span class="banner-icon">📝</span>
+      <div>
+        <div class="banner-title">{{ draftCount }} brouillon(s) à compléter</div>
+        <div class="banner-sub">Touchez pour reprendre vos saisies en cours</div>
+      </div>
+    </div>
+    <span class="banner-action-tag">Compléter &rarr;</span>
   </div>
 
   <!-- Section: Fiches de saisie terrain -->
@@ -164,6 +204,26 @@
       <div class="card-content">
         <h4 class="card-name">Leaders d'Opinion</h4>
         <p class="card-desc">Identification des personnalités influentes, associations et zones d'ancrage.</p>
+        <span class="card-action">Ouvrir la fiche &rarr;</span>
+      </div>
+    </div>
+
+    <!-- Form 7: Groupements de Femmes (GPF) -->
+    <div class="form-card" [routerLink]="['/form-gpf']">
+      <div class="card-icon-bubble card-green">👩‍👩‍👧</div>
+      <div class="card-content">
+        <h4 class="card-name">Groupements de Femmes (GPF)</h4>
+        <p class="card-desc">Indicateurs contractuels : Nouveaux GPF engagés & GPF redynamisés dans la vente.</p>
+        <span class="card-action">Ouvrir la fiche &rarr;</span>
+      </div>
+    </div>
+
+    <!-- Form 8: Acteurs Locaux (LME) -->
+    <div class="form-card" [routerLink]="['/form-lme']">
+      <div class="card-icon-bubble card-blue">🏪</div>
+      <div class="card-content">
+        <h4 class="card-name">Acteurs Locaux (LME)</h4>
+        <p class="card-desc">Indicateurs contractuels : Nouveaux LME enrôlés & LME redynamisés dans la vente.</p>
         <span class="card-action">Ouvrir la fiche &rarr;</span>
       </div>
     </div>

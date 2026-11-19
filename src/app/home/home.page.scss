@@ -234,6 +234,82 @@
       }
     }
   }
+
+  .hero-region-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 3px;
+    border-radius: 12px;
+
+    .tab-btn {
+      flex: 1;
+      padding: 5px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 8px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.85);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &.active {
+        background: #fde047;
+        color: #14532d;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      }
+    }
+  }
+
+  .hero-sub-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 11px;
+    opacity: 0.95;
+
+    .sub-stat-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .sub-stat-separator {
+      opacity: 0.5;
+    }
+
+    .sub-stat-val strong {
+      color: #fde047;
+    }
+  }
+
+  .hero-pending-pill {
+    margin-top: 8px;
+    background: rgba(245, 158, 11, 0.25);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fef08a;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .hero-national-pill {
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    opacity: 0.9;
+  }
 }
 
 .sync-panel {
@@ -340,6 +416,31 @@
     font-size: 16px;
     font-weight: bold;
     color: #15803d;
+  }
+
+  &.draft-banner-alert {
+    background: #fffbeb;
+    border: 1.5px solid #fcd34d;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1);
+    margin-top: -8px;
+
+    .banner-title {
+      color: #92400e;
+    }
+
+    .banner-sub {
+      color: #b45309;
+    }
+
+    .banner-action-tag {
+      background: #f59e0b;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
   }
 }
 

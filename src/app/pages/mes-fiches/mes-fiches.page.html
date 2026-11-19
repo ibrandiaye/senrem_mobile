@@ -28,27 +28,32 @@
           <option value="caravanes">Caravanes</option>
           <option value="emissions">Émissions Radios</option>
           <option value="leaders">Leaders d'Opinion</option>
+          <option value="gpfs">Groupements de Femmes (GPF)</option>
+          <option value="lmes">Acteurs Locaux (LME)</option>
         </select>
       </div>
 
       <div class="filter-row mt-2">
         <label>Statut :</label>
         <select [(ngModel)]="selectedStatus" class="filter-select">
-          <option value="all">Tous les statuts</option>
-          <option value="en_attente">⏳ En attente de synchro</option>
-          <option value="synchronise">✓ Synchronisé</option>
-          <option value="brouillon">📝 Brouillon</option>
+          <option value="all">Tous les statuts ({{ fiches.length }})</option>
+          <option value="brouillon">📝 Brouillons ({{ draftCount }})</option>
+          <option value="en_attente">⏳ En attente ({{ pendingCount }})</option>
+          <option value="synchronise">✓ Synchronisés</option>
         </select>
       </div>
     </div>
 
     <!-- Fiches List -->
-    <div class="list-count-label">
-      {{ filteredFiches.length }} enregistrement(s) trouvé(s)
+    <div class="list-count-label" style="display: flex; justify-content: space-between; align-items: center;">
+      <span>{{ filteredFiches.length }} enregistrement(s) trouvé(s)</span>
+      <button *ngIf="fiches.length > 0" (click)="clearAllLocalFiches()" style="background: none; border: 1px solid #ef4444; color: #ef4444; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer;">
+        🗑️ Vider le local
+      </button>
     </div>
 
     <div class="fiches-list">
-      <div *ngFor="let f of filteredFiches" class="fiche-card">
+      <div *ngFor="let f of filteredFiches" class="fiche-card" [class.is-draft-card]="f.sync_status === 'brouillon'">
         <div class="fiche-header">
           <span class="type-pill" [class]="'pill-' + f.type">{{ f.typeLabel }}</span>
           <span class="status-pill" [class]="'status-' + f.sync_status">
@@ -58,16 +63,24 @@
           </span>
         </div>
 
-        <div class="fiche-title">{{ f.title }}</div>
-        <div class="fiche-sub">{{ f.subtitle }}</div>
+        <div class="fiche-title" (click)="openFiche(f)" style="cursor: pointer;">{{ f.title }}</div>
+        <div class="fiche-sub" (click)="openFiche(f)" style="cursor: pointer;">{{ f.subtitle }}</div>
 
         <div class="fiche-footer">
           <div class="fiche-date">
             Créé le : {{ f.client_created_at | date:'dd/MM/yyyy HH:mm' }}
           </div>
-          <button class="btn-delete" (click)="deleteItem(f)">
-            Supprimer
-          </button>
+          <div class="card-btn-group">
+            <button *ngIf="f.sync_status === 'brouillon'" class="btn-complete" (click)="openFiche(f)">
+              ✏️ Compléter
+            </button>
+            <button *ngIf="f.sync_status !== 'brouillon'" class="btn-edit" (click)="openFiche(f)">
+              ✏️ Modifier
+            </button>
+            <button class="btn-delete" (click)="deleteItem(f)">
+              Supprimer
+            </button>
+          </div>
         </div>
       </div>
 

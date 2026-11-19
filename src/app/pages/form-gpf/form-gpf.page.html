@@ -1,0 +1,187 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="success">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text="Retour"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ isEditingDraft ? 'Compléter le Brouillon' : 'Fiche Groupement de Femmes (GPF)' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="form-content">
+  <div class="form-container">
+
+    <!-- Draft Indicator -->
+    <div *ngIf="isEditingDraft" class="draft-indicator-banner">
+      <span>📝 Mode Brouillon : Complétez vos données et synchronisez</span>
+    </div>
+
+    <!-- Type Switcher (Nouveau Engagé vs Redynamisé) -->
+    <div class="type-selector-card">
+      <div class="type-selector-label">Indicateur Contractuel GPF :</div>
+      <div class="type-toggle-group">
+        <button 
+          type="button" 
+          class="type-toggle-btn" 
+          [class.active-green]="formData.type_indicateur === 'nouveau'"
+          (click)="setType('nouveau')">
+          <span class="btn-icon">🟢</span>
+          <span>Nouveau GPF engagé</span>
+        </button>
+        <button 
+          type="button" 
+          class="type-toggle-btn" 
+          [class.active-blue]="formData.type_indicateur === 'redynamise'"
+          (click)="setType('redynamise')">
+          <span class="btn-icon">🔄</span>
+          <span>GPF redynamisé</span>
+        </button>
+      </div>
+      <div class="type-help-hint">
+        <span *ngIf="formData.type_indicateur === 'nouveau'">Cible contractuelle : 300 nouveaux GPF engagés dans la vente de FA.</span>
+        <span *ngIf="formData.type_indicateur === 'redynamise'">Cible contractuelle : 700 GPF redynamisés dans la diffusion de FA.</span>
+      </div>
+    </div>
+
+    <!-- 1. Date de l'action -->
+    <div class="form-section">
+      <div class="section-title">1. Date & Référence</div>
+      <div class="form-group">
+        <label>{{ formData.type_indicateur === 'nouveau' ? 'Date d\'engagement *' : 'Date de redynamisation *' }}</label>
+        <input type="date" [(ngModel)]="formData.date_action" class="custom-input">
+      </div>
+    </div>
+
+    <!-- 2. Informations du Groupement -->
+    <div class="form-section">
+      <div class="section-title">2. Identification du Groupement</div>
+
+      <div class="form-group">
+        <label>Nom du Groupement *</label>
+        <input type="text" [(ngModel)]="formData.nom_groupement" placeholder="Ex: GPF Bokk Jom / Benno..." class="custom-input">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Nombre de membres</label>
+          <input type="number" [(ngModel)]="formData.nb_membres" placeholder="Ex: 25" class="custom-input" min="1">
+        </div>
+        <div class="form-group half">
+          <label>Activité Principale</label>
+          <input type="text" [(ngModel)]="formData.activite_principale" placeholder="Ex: Maraîchage, Commerce..." class="custom-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Localisation -->
+    <div class="form-section">
+      <div class="section-title">3. Localisation Géographique</div>
+
+      <div class="form-group">
+        <label>
+          Région *
+          <span class="badge-lock" *ngIf="isRegionLocked">🔒 Affectation Fixée</span>
+        </label>
+        <input *ngIf="isRegionLocked" type="text" [value]="formData.region" readonly class="custom-input locked-input">
+        <select *ngIf="!isRegionLocked" [(ngModel)]="formData.region" (change)="onRegionChange()" class="custom-select">
+          <option *ngFor="let r of regions" [value]="r.nom">{{ r.nom }}</option>
+        </select>
+        <small *ngIf="isRegionLocked" class="hint-locked">Collecte verrouillée sur votre région d'affectation.</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label>Département *</label>
+          <select [(ngModel)]="formData.departement" (change)="onDepartementChange()" class="custom-select">
+            <option value="">Sélectionner</option>
+            <option *ngFor="let d of departements" [value]="d.nom">{{ d.nom }}</option>
+          </select>
+        </div>
+        <div class="form-group half">
+          <label>Commune *</label>
+          <select [(ngModel)]="selectedCommune" (change)="onCommuneChange()" class="custom-select">
+            <option value="">-- Choisir la commune --</option>
+            <option *ngFor="let c of communes" [value]="c.nom">{{ c.nom }}</option>
+            <option value="__autre__">+ Saisir une autre commune...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="isAutreCommune">
+        <label>Nom de la commune (Autre) *</label>
+        <input type="text" [(ngModel)]="formData.commune" placeholder="Préciser le nom de la commune" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Village ou quartier</label>
+        <input type="text" [(ngModel)]="formData.village_quartier" placeholder="Ex: Quartier Médina / Village Ndoga" class="custom-input">
+      </div>
+
+      <div class="gps-box mt-3">
+        <button type="button" class="btn-gps" (click)="captureGps()" [disabled]="isCapturingGps">
+          <span>📍</span>
+          <span *ngIf="!isCapturingGps">Capturer les coordonnées GPS du GPF</span>
+          <span *ngIf="isCapturingGps">Acquisition satellite en cours...</span>
+        </button>
+        <div *ngIf="formData.latitude" class="gps-coords">
+          Lat : {{ formData.latitude | number:'1.4-4' }}, Lng : {{ formData.longitude | number:'1.4-4' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Présidente du Groupement -->
+    <div class="form-section">
+      <div class="section-title">4. Présidente du Groupement</div>
+
+      <div class="form-group">
+        <label>Nom de la Présidente</label>
+        <input type="text" [(ngModel)]="formData.nom_presidente" placeholder="Prénom et Nom de la Présidente" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Téléphone Présidente</label>
+        <input type="tel" [(ngModel)]="formData.telephone" placeholder="Ex: 77 123 45 67" class="custom-input">
+      </div>
+
+      <div class="form-group">
+        <label>Âge de la Présidente (Tranche d'âge)</label>
+        <div class="age-toggle-group">
+          <button type="button" 
+                  class="age-btn" 
+                  [class.active]="formData.age === '- 35 ans' || formData.age === 'Moins 35 ans' || formData.age === '< 35 ans'" 
+                  (click)="setAge('- 35 ans')">
+            <span class="age-icon">🌱</span>
+            <span class="age-label">- 35 ans</span>
+            <span class="age-sub">Moins de 35 ans (&lt; 35 ans)</span>
+          </button>
+          <button type="button" 
+                  class="age-btn" 
+                  [class.active]="formData.age === 'plus de 35 ans' || formData.age === 'Plus de 35 ans' || formData.age === '35 ans et plus' || formData.age === '+ 35 ans'" 
+                  (click)="setAge('plus de 35 ans')">
+            <span class="age-icon">👩</span>
+            <span class="age-label">plus de 35 ans</span>
+            <span class="age-sub">Plus de 35 ans (≥ 35 ans)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-draft" (click)="save(true)">
+        💾 Sauvegarder Brouillon
+      </button>
+      <button type="button" class="btn-submit" (click)="save(false)">
+        ✓ Valider la Fiche GPF
+      </button>
+    </div>
+
+  </div>
+
+  <ion-toast 
+    [isOpen]="isToastOpen" 
+    [message]="toastMessage" 
+    [duration]="3000" 
+    [color]="toastColor"
+    (didDismiss)="isToastOpen = false">
+  </ion-toast>
+</ion-content>

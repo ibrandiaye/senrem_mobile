@@ -193,4 +193,13 @@ export class AuthService {
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     this.currentUserSubject.next(user);
   }
+
+  /**
+   * Recharge l'utilisateur depuis le stockage local (ex: après un sync/pull)
+   */
+  reloadUserFromStorage(): AuthUser | null {
+    const user = this.getStoredUser();
+    this.currentUserSubject.next(user);
+    return user;
+  }
 }

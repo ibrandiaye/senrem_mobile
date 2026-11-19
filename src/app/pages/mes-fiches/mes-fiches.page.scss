@@ -129,6 +129,38 @@
       color: #94a3b8;
     }
 
+    .card-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-complete {
+      background: #059669;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 1px 2px rgba(5, 150, 105, 0.2);
+    }
+
+    .btn-edit {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     .btn-delete {
       background: none;
       border: none;
@@ -137,6 +169,11 @@
       font-weight: 700;
       cursor: pointer;
     }
+  }
+
+  &.is-draft-card {
+    border-left: 4px solid #f59e0b;
+    background: #fffdfa;
   }
 }
 

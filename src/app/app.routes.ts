@@ -42,6 +42,16 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/form-leaders/form-leaders.page').then((m) => m.FormLeadersPage),
   },
   {
+    path: 'form-gpf',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/form-gpf/form-gpf.page').then((m) => m.FormGpfPage),
+  },
+  {
+    path: 'form-lme',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/form-lme/form-lme.page').then((m) => m.FormLmePage),
+  },
+  {
     path: 'mes-fiches',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/mes-fiches/mes-fiches.page').then((m) => m.MesFichesPage),
